@@ -1,0 +1,15 @@
+# ghost-pv.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ghost-pv
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data/ghost"
