@@ -1,0 +1,29 @@
+replicaCount: 1
+
+image:
+  repository: gyenoch/ghost
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+mysql:
+  image:
+    repository: gyenoch/mysql
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  rootPassword: example
+  database: ghost
+  user: ghost
+  password: example
+
+service:
+  type: LoadBalancer
+  port: 80
+
+mysqlService:
+  type: ClusterIP
+  port: 3306
+
+persistence:
+  enabled: true
+  accessMode: ReadWriteOnce
+  size: 20Gi

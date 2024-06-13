@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ghost.deploymentName" . }}
+  labels:
+    {{- include "ghost.standardLabels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "ghost.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "ghost.name" . }}
+        {{- include "ghost.labels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: ghost
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        ports:
+        - containerPort: 2368
+        env:
+        - name: database__client
+          value: mysql
+        - name: database__connection__host
+          value: mysql
+        - name: database__connection__user
+          value: {{ .Values.mysql.user }}
+        - name: database__connection__password
+          valueFrom:
+            secretKeyRef:
+              name: ghost-mysql-secret
+              key: password
+        - name: database__connection__database
+          value: {{ .Values.mysql.database }}
+        volumeMounts:
+        - name: ghost-data
+          mountPath: /var/lib/ghost/content
+      volumes:
+      - name: ghost-data
+        persistentVolumeClaim:
+          claimName: ghost-pvc
