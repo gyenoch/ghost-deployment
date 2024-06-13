@@ -40,19 +40,16 @@ jobs:
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./Docker/custom-mysql
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-    - name: Install AWS CLI
-      run: |
-        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-        unzip awscliv2.zip
-        sudo ./aws/install
-
     - name: Set up Kubectl
       uses: azure/setup-kubectl@v1
       with:
         version: 'v1.21.0'  # Ensure the kubectl version is compatible with your EKS cluster
 
     - name: Load AWS EKS credentials
-      run: aws eks update-kubeconfig --name gyenoch --region us-east-1  # Change to your cluster name
+      env:
+        KUBECONFIG: ${{ github.workspace }}/kubeconfig
+      run: |
+        aws eks update-kubeconfig --name gyenoch --region us-east-1 --kubeconfig $KUBECONFIG
 
     - name: Update Deployment Image for Ghost
       run: |
@@ -63,7 +60,9 @@ jobs:
         sed -i "s#image:.*mysql:.*#image: ${{ steps.login-ecr.outputs.registry }}/mysql:${{ github.sha }}#g" ./kube/mysql-deployment.yaml
 
     - name: Deploy to EKS
-      run: kubectl apply -f kube/ --validate=false  # Path to your Kubernetes config files
+      env:
+        KUBECONFIG: ${{ github.workspace }}/kubeconfig
+      run: kubectl apply -f kube/  --validate=false  # Path to your Kubernetes config files
 
     # - name: Verify deployment
     #   run: kubectl rollout status deployment/ghost  # Change to your deployment resource name if necessary
